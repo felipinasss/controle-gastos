@@ -1,15 +1,12 @@
-import type { ReactNode } from 'react'
 import { DebtForm } from '../components/DebtForm'
 import { DebtList } from '../components/DebtList'
 import type { ExpenseStore } from '../hooks/useExpenseStore'
 
 interface DebtsScreenProps {
   store: ExpenseStore
-  /** Slot para ações de backup (export/import) — preenchido na etapa 6 */
-  backupActions?: ReactNode
 }
 
-export function DebtsScreen({ store, backupActions }: DebtsScreenProps) {
+export function DebtsScreen({ store }: DebtsScreenProps) {
   return (
     <>
       <DebtForm cardSuggestions={store.cardSuggestions} onSubmit={store.addDebt} />
@@ -23,8 +20,6 @@ export function DebtsScreen({ store, backupActions }: DebtsScreenProps) {
         installments={store.installments}
         onDelete={store.removeDebt}
       />
-
-      {backupActions}
 
       <div className="foot">
         <button

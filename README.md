@@ -17,7 +17,7 @@ Outros scripts:
 | --- | --- |
 | `npm run build` | Tipocheck + build de produção (com service worker) |
 | `npm run preview` | Serve o build (`dist/`) para testar a PWA |
-| `npm test` | Vitest — regras de cálculo e backup |
+| `npm test` | Vitest — regras de cálculo |
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier |
 
@@ -35,7 +35,7 @@ controle-gastos/
 │   ├── hooks/              # Estado da aplicação
 │   ├── screens/            # Visão geral e Dívidas
 │   ├── styles/             # Tokens CSS e estilos globais
-│   └── utils/              # Backup JSON
+│   └── utils/              # Utilitários (ex.: serialização JSON)
 ├── index.html
 ├── vite.config.ts
 └── package.json
@@ -46,7 +46,7 @@ A UI fala só com `ExpenseRepository`. A implementação atual é Dexie; no futu
 ## Telas
 
 1. **Visão geral** — navegação de mês, anel de progresso (pago no mês), 3 cards de resumo, alerta de atraso, donut de pendências (por cartão ou por dívida) e lista de faturas do mês com botão circular de confirmação.
-2. **Dívidas** — formulário de nova dívida, lista com barra de progresso e exclusão, backup JSON e “Apagar todos os dados”.
+2. **Dívidas** — formulário de nova dívida/assinatura, lista com exclusão e “Apagar todos os dados”.
 
 ## Regras de negócio
 

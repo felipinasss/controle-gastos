@@ -435,24 +435,6 @@ input {
   padding: 18px 0;
 }
 
-.backup-hint {
-  margin: 0 0 12px;
-  color: var(--mut);
-  font-size: 13px;
-}
-
-.backup-actions {
-  display: grid;
-  gap: 8px;
-}
-
-.btn.secondary {
-  margin-top: 0;
-  background: transparent;
-  color: var(--g);
-  border: 1px solid var(--g);
-}
-
 .foot {
   text-align: center;
   margin-top: 18px;
