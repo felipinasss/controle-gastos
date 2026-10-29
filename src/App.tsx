@@ -1,3 +1,4 @@
+import { BackupActions } from './components/BackupActions'
 import { Tabs } from './components/Tabs'
 import { useExpenseStore } from './hooks/useExpenseStore'
 import { DebtsScreen } from './screens/DebtsScreen'
@@ -27,7 +28,7 @@ export default function App() {
       ) : store.tab === 'overview' ? (
         <OverviewScreen store={store} />
       ) : (
-        <DebtsScreen store={store} />
+        <DebtsScreen store={store} backupActions={<BackupActions store={store} />} />
       )}
     </div>
   )
