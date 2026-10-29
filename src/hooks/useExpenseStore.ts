@@ -84,8 +84,8 @@ export function useExpenseStore() {
   )
 
   const globalSummary = useMemo(
-    () => computeGlobalSummary(installments, nowMonth),
-    [installments, nowMonth],
+    () => computeGlobalSummary(installments, nowMonth, debts),
+    [installments, nowMonth, debts],
   )
 
   const unpaid = useMemo(() => installments.filter((p) => !p.paid), [installments])

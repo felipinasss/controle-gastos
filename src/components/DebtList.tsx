@@ -17,7 +17,7 @@ export function DebtList({ debts, installments, onDelete }: DebtListProps) {
     <>
       {debts.map((debt) => {
         const subscription = isSubscription(debt)
-        const progress = debtProgress(installments, debt)
+        const progress = subscription ? null : debtProgress(installments, debt)
         return (
           <div className="item" key={debt.id}>
             <div className="t">
@@ -26,18 +26,15 @@ export function DebtList({ debts, installments, onDelete }: DebtListProps) {
                 {subscription ? (
                   <>
                     {debt.card} · {formatBRL(debt.totalCents)}/mês · assinatura
-                    {progress.total > 0
-                      ? ` · ${progress.paidCount}/${progress.total} geradas pagas`
-                      : null}
                   </>
                 ) : (
                   <>
-                    {debt.card} · {formatBRL(debt.totalCents)} · {progress.paidCount}/
+                    {debt.card} · {formatBRL(debt.totalCents)} · {progress!.paidCount}/
                     {debt.installmentCount} pagas
                   </>
                 )}
               </small>
-              {!subscription ? (
+              {progress ? (
                 <div className="bar" style={{ marginTop: 8 }} aria-hidden>
                   <i style={{ width: `${progress.fraction * 100}%` }} />
                 </div>

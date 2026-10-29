@@ -6,16 +6,21 @@ interface CardInvoiceItemProps {
   onToggle: (installmentIds: string[], currentlyAllPaid: boolean) => void
 }
 
+function cardSubtitle(invoice: CardMonthInvoice): string {
+  const parts: string[] = []
+  if (invoice.parcelCount === 1) parts.push('1 parcela')
+  else if (invoice.parcelCount > 1) parts.push(`${invoice.parcelCount} parcelas`)
+  if (invoice.hasSubscription) parts.push('assinatura')
+  return parts.length ? parts.join(' · ') : 'no mês'
+}
+
 /** Linha agregada por cartão (modo "Por cartão") — soma todas as dívidas do cartão no mês */
 export function CardInvoiceItem({ invoice, onToggle }: CardInvoiceItemProps) {
-  const subtitle =
-    invoice.count === 1 ? '1 parcela no mês' : `${invoice.count} parcelas no mês`
-
   return (
     <div className={`item${invoice.paid ? ' paid' : ''}`}>
       <div className="t">
         <b>{invoice.card}</b>
-        <small>{subtitle}</small>
+        <small>{cardSubtitle(invoice)}</small>
       </div>
       <div className="v">{formatBRL(invoice.amountCents)}</div>
       <button

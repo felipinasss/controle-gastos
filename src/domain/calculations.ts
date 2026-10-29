@@ -57,20 +57,31 @@ export function computeMonthSummary(
 export function computeGlobalSummary(
   installments: Installment[],
   currentMonth: YearMonth,
+  debts: Debt[] = [],
 ): GlobalSummary {
+  const subscriptionIds = new Set(
+    debts.filter((d) => d.kind === 'subscription').map((d) => d.id),
+  )
+  const isParcel = (p: Installment) => !subscriptionIds.has(p.debtId)
+
   const unpaid = installments.filter((p) => !p.paid)
+  const parcelInstallments = installments.filter(isParcel)
+  const unpaidParcels = unpaid.filter(isParcel)
+  // Assinaturas entram no dinheiro, mas não na contagem/visão de parcelas
+  const unpaidForPayoff = unpaidParcels
+
   const allInstallmentsCents = sumCents(installments)
   const totalUnpaidCents = sumCents(unpaid)
   const lateCents = sumCents(unpaid.filter((p) => p.dueMonth < currentMonth))
-  const payoffMonth = unpaid.length
-    ? unpaid.map((p) => p.dueMonth).sort().at(-1) ?? null
+  const payoffMonth = unpaidForPayoff.length
+    ? unpaidForPayoff.map((p) => p.dueMonth).sort().at(-1) ?? null
     : null
 
   return {
     allInstallmentsCents,
     totalUnpaidCents,
-    unpaidCount: unpaid.length,
-    totalCount: installments.length,
+    unpaidCount: unpaidParcels.length,
+    totalCount: parcelInstallments.length,
     lateCents,
     payoffMonth,
     payoffLabel: payoffMonth ? formatMonthShort(payoffMonth) : '—',
@@ -122,8 +133,11 @@ export interface CardMonthInvoice {
   card: string
   amountCents: number
   installmentIds: string[]
-  count: number
-  /** true só se todas as parcelas do cartão no mês estiverem pagas */
+  /** Cobranças de dívidas parceladas no mês (assinaturas não entram) */
+  parcelCount: number
+  /** Há cobrança de assinatura neste cartão no mês */
+  hasSubscription: boolean
+  /** true só se todas as cobranças do cartão no mês estiverem pagas */
   paid: boolean
 }
 
@@ -135,21 +149,30 @@ export function groupMonthInvoicesByCard(
   const debtById = new Map(debts.map((d) => [d.id, d]))
   const groups = new Map<
     string,
-    { amountCents: number; installmentIds: string[]; count: number; unpaid: number }
+    {
+      amountCents: number
+      installmentIds: string[]
+      parcelCount: number
+      hasSubscription: boolean
+      unpaid: number
+    }
   >()
 
   for (const p of monthInstallments) {
     const debt = debtById.get(p.debtId)
     const card = debt?.card || 'Sem cartão'
+    const subscription = debt?.kind === 'subscription'
     const current = groups.get(card) ?? {
       amountCents: 0,
       installmentIds: [],
-      count: 0,
+      parcelCount: 0,
+      hasSubscription: false,
       unpaid: 0,
     }
     current.amountCents += p.amountCents
     current.installmentIds.push(p.id)
-    current.count += 1
+    if (subscription) current.hasSubscription = true
+    else current.parcelCount += 1
     if (!p.paid) current.unpaid += 1
     groups.set(card, current)
   }
@@ -159,7 +182,8 @@ export function groupMonthInvoicesByCard(
       card,
       amountCents: g.amountCents,
       installmentIds: g.installmentIds,
-      count: g.count,
+      parcelCount: g.parcelCount,
+      hasSubscription: g.hasSubscription,
       paid: g.unpaid === 0,
     }))
     .sort((a, b) => Number(a.paid) - Number(b.paid) || a.card.localeCompare(b.card, 'pt-BR'))
