@@ -68,14 +68,22 @@ export function OverviewScreen({ store }: OverviewScreenProps) {
       {store.monthInstallments.length === 0 ? (
         <div className="empty">Nenhuma fatura neste mês.</div>
       ) : (
-        store.monthInstallments.map((installment) => (
-          <InstallmentItem
-            key={installment.id}
-            installment={installment}
-            debt={store.debtById.get(installment.debtId)}
-            onToggle={store.togglePaid}
-          />
-        ))
+        [...store.monthInstallments]
+          .sort((a, b) => {
+            if (store.groupBy !== 'card') return 0
+            const cardA = store.debtById.get(a.debtId)?.card ?? ''
+            const cardB = store.debtById.get(b.debtId)?.card ?? ''
+            return cardA.localeCompare(cardB, 'pt-BR') || Number(a.paid) - Number(b.paid)
+          })
+          .map((installment) => (
+            <InstallmentItem
+              key={installment.id}
+              installment={installment}
+              debt={store.debtById.get(installment.debtId)}
+              groupBy={store.groupBy}
+              onToggle={store.togglePaid}
+            />
+          ))
       )}
     </>
   )

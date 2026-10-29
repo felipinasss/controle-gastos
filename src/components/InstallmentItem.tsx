@@ -1,24 +1,34 @@
 import { formatBRL } from '../domain/money'
-import type { Debt, Installment } from '../domain/models'
+import type { Debt, Installment, PendenciasGroupBy } from '../domain/models'
 
 interface InstallmentItemProps {
   installment: Installment
   debt?: Debt
+  groupBy: PendenciasGroupBy
   onToggle: (id: string) => void
 }
 
-export function InstallmentItem({ installment, debt, onToggle }: InstallmentItemProps) {
-  const name = debt?.name ?? '?'
-  const card = debt?.card ?? ''
+export function InstallmentItem({
+  installment,
+  debt,
+  groupBy,
+  onToggle,
+}: InstallmentItemProps) {
+  const debtName = debt?.name ?? '?'
+  const card = debt?.card ?? 'Sem cartão'
   const total = debt?.installmentCount ?? 0
+
+  const title = groupBy === 'card' ? card : debtName
+  const subtitle =
+    groupBy === 'card'
+      ? `${debtName} · parcela ${installment.number}/${total}`
+      : `${card} · parcela ${installment.number}/${total}`
 
   return (
     <div className={`item${installment.paid ? ' paid' : ''}`}>
       <div className="t">
-        <b>{name}</b>
-        <small>
-          {card} · parcela {installment.number}/{total}
-        </small>
+        <b>{title}</b>
+        <small>{subtitle}</small>
       </div>
       <div className="v">{formatBRL(installment.amountCents)}</div>
       <button
