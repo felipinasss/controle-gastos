@@ -7,7 +7,8 @@ export class ControleGastosDB extends Dexie {
   meta!: EntityTable<{ key: string; value: string }, 'key'>
 
   constructor() {
-    super('controle-gastos')
+    // Nome novo: abre vazio (sem demos do protótipo) em quem já tinha a v1 seedada
+    super('controle-gastos-v2')
     this.version(1).stores({
       debts: 'id, card, firstDueMonth',
       installments: 'id, debtId, dueMonth, paid',

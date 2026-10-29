@@ -2,12 +2,9 @@ import { createDebtWithInstallments } from '../../domain/installments'
 import type { CreateDebtInput, Debt, Installment } from '../../domain/models'
 import type { ExpenseRepository } from '../repository'
 import { db } from './db'
-import { buildDemoData } from './seed'
 
-const SEEDED_KEY = 'seeded'
-
-/** Evita seed duplicado (ex.: React Strict Mode montando 2x) */
-let seedLock: Promise<void> | null = null
+/** Evita open concorrente (ex.: React Strict Mode) */
+let readyLock: Promise<void> | null = null
 
 export class DexieExpenseRepository implements ExpenseRepository {
   async listDebts(): Promise<Debt[]> {
@@ -54,7 +51,7 @@ export class DexieExpenseRepository implements ExpenseRepository {
     await db.transaction('rw', db.debts, db.installments, db.meta, async () => {
       await db.debts.clear()
       await db.installments.clear()
-      await db.meta.put({ key: SEEDED_KEY, value: '1' })
+      await db.meta.clear()
     })
   }
 
@@ -64,38 +61,18 @@ export class DexieExpenseRepository implements ExpenseRepository {
       await db.installments.clear()
       if (debts.length) await db.debts.bulkPut(debts)
       if (installments.length) await db.installments.bulkPut(installments)
-      await db.meta.put({ key: SEEDED_KEY, value: '1' })
     })
   }
 
+  /** Abre o banco local — instalação nova começa sem dívidas */
   async ensureSeeded(): Promise<void> {
-    if (!seedLock) {
-      seedLock = this.runSeed().catch((err) => {
-        seedLock = null
+    if (!readyLock) {
+      readyLock = db.open().then(() => undefined).catch((err) => {
+        readyLock = null
         throw err
       })
     }
-    return seedLock
-  }
-
-  private async runSeed(): Promise<void> {
-    await db.open()
-    const seeded = await db.meta.get(SEEDED_KEY)
-    if (seeded) return
-
-    const count = await db.debts.count()
-    if (count > 0) {
-      await db.meta.put({ key: SEEDED_KEY, value: '1' })
-      return
-    }
-
-    const demo = buildDemoData()
-    await db.transaction('rw', db.debts, db.installments, db.meta, async () => {
-      // bulkPut: idempotente se outra montagem já inseriu os demos
-      await db.debts.bulkPut(demo.debts)
-      await db.installments.bulkPut(demo.installments)
-      await db.meta.put({ key: SEEDED_KEY, value: '1' })
-    })
+    return readyLock
   }
 }
 

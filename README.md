@@ -59,7 +59,7 @@ A UI fala só com `ExpenseRepository`. A implementação atual é Dexie; no futu
 - Parcelas não pagas de meses anteriores aparecem como **Em atraso**.
 - Excluir uma dívida remove também suas parcelas (com confirmação).
 - Pendências podem ser agrupadas **por cartão** ou **por dívida**.
-- Na primeira abertura, o app semeia os mesmos demos do protótipo: Notebook (Nubank) e Geladeira (Itaú).
+- Instalação nova começa **vazia** (sem dívidas de exemplo). Cadastre a primeira em **Dívidas**.
 
 ## PWA / offline
 
