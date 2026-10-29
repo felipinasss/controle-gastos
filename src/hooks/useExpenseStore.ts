@@ -42,9 +42,17 @@ export function useExpenseStore() {
         await expenseRepository.ensureSeeded()
         if (cancelled) return
         await refresh()
+        if (!cancelled) setError(null)
       } catch (err) {
         console.error(err)
-        if (!cancelled) setError('Não foi possível carregar os dados locais.')
+        // Se o seed falhou por corrida mas os dados já existem, segue normal
+        try {
+          await refresh()
+          if (!cancelled) setError(null)
+        } catch (refreshErr) {
+          console.error(refreshErr)
+          if (!cancelled) setError('Não foi possível carregar os dados locais.')
+        }
       } finally {
         if (!cancelled) setReady(true)
       }

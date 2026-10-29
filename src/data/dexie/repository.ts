@@ -6,6 +6,9 @@ import { buildDemoData } from './seed'
 
 const SEEDED_KEY = 'seeded'
 
+/** Evita seed duplicado (ex.: React Strict Mode montando 2x) */
+let seedLock: Promise<void> | null = null
+
 export class DexieExpenseRepository implements ExpenseRepository {
   async listDebts(): Promise<Debt[]> {
     return db.debts.toArray()
@@ -59,13 +62,24 @@ export class DexieExpenseRepository implements ExpenseRepository {
     await db.transaction('rw', db.debts, db.installments, db.meta, async () => {
       await db.debts.clear()
       await db.installments.clear()
-      if (debts.length) await db.debts.bulkAdd(debts)
-      if (installments.length) await db.installments.bulkAdd(installments)
+      if (debts.length) await db.debts.bulkPut(debts)
+      if (installments.length) await db.installments.bulkPut(installments)
       await db.meta.put({ key: SEEDED_KEY, value: '1' })
     })
   }
 
   async ensureSeeded(): Promise<void> {
+    if (!seedLock) {
+      seedLock = this.runSeed().catch((err) => {
+        seedLock = null
+        throw err
+      })
+    }
+    return seedLock
+  }
+
+  private async runSeed(): Promise<void> {
+    await db.open()
     const seeded = await db.meta.get(SEEDED_KEY)
     if (seeded) return
 
@@ -77,8 +91,9 @@ export class DexieExpenseRepository implements ExpenseRepository {
 
     const demo = buildDemoData()
     await db.transaction('rw', db.debts, db.installments, db.meta, async () => {
-      await db.debts.bulkAdd(demo.debts)
-      await db.installments.bulkAdd(demo.installments)
+      // bulkPut: idempotente se outra montagem já inseriu os demos
+      await db.debts.bulkPut(demo.debts)
+      await db.installments.bulkPut(demo.installments)
       await db.meta.put({ key: SEEDED_KEY, value: '1' })
     })
   }
