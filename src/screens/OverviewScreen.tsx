@@ -1,9 +1,12 @@
+import { useMemo } from 'react'
+import { CardInvoiceItem } from '../components/CardInvoiceItem'
 import { InstallmentItem } from '../components/InstallmentItem'
 import { LateAlert } from '../components/LateAlert'
 import { MonthNav } from '../components/MonthNav'
 import { Pendencias } from '../components/Pendencias'
 import { Ring } from '../components/Ring'
 import { SummaryCard } from '../components/SummaryCard'
+import { groupMonthInvoicesByCard } from '../domain/calculations'
 import { formatBRL } from '../domain/money'
 import type { ExpenseStore } from '../hooks/useExpenseStore'
 
@@ -19,6 +22,11 @@ export function OverviewScreen({ store }: OverviewScreenProps) {
   const installmentProgress = g.totalCount
     ? ((g.totalCount - g.unpaidCount) / g.totalCount) * 100
     : 0
+
+  const cardInvoices = useMemo(
+    () => groupMonthInvoicesByCard(store.monthInstallments, store.debts),
+    [store.monthInstallments, store.debts],
+  )
 
   return (
     <>
@@ -67,23 +75,23 @@ export function OverviewScreen({ store }: OverviewScreenProps) {
 
       {store.monthInstallments.length === 0 ? (
         <div className="empty">Nenhuma fatura neste mês.</div>
+      ) : store.groupBy === 'card' ? (
+        cardInvoices.map((invoice) => (
+          <CardInvoiceItem
+            key={invoice.card}
+            invoice={invoice}
+            onToggle={store.toggleCardMonthPaid}
+          />
+        ))
       ) : (
-        [...store.monthInstallments]
-          .sort((a, b) => {
-            if (store.groupBy !== 'card') return 0
-            const cardA = store.debtById.get(a.debtId)?.card ?? ''
-            const cardB = store.debtById.get(b.debtId)?.card ?? ''
-            return cardA.localeCompare(cardB, 'pt-BR') || Number(a.paid) - Number(b.paid)
-          })
-          .map((installment) => (
-            <InstallmentItem
-              key={installment.id}
-              installment={installment}
-              debt={store.debtById.get(installment.debtId)}
-              groupBy={store.groupBy}
-              onToggle={store.togglePaid}
-            />
-          ))
+        store.monthInstallments.map((installment) => (
+          <InstallmentItem
+            key={installment.id}
+            installment={installment}
+            debt={store.debtById.get(installment.debtId)}
+            onToggle={store.togglePaid}
+          />
+        ))
       )}
     </>
   )

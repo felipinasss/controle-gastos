@@ -110,6 +110,15 @@ export function useExpenseStore() {
     [refresh],
   )
 
+  /** Marca/desmarca todas as parcelas de um cartão no mês (visão agregada) */
+  const toggleCardMonthPaid = useCallback(
+    async (installmentIds: string[], currentlyAllPaid: boolean) => {
+      await expenseRepository.setInstallmentsPaid(installmentIds, !currentlyAllPaid)
+      await refresh()
+    },
+    [refresh],
+  )
+
   const addDebt = useCallback(
     async (input: CreateDebtInput) => {
       await expenseRepository.createDebt(input)
@@ -153,6 +162,7 @@ export function useExpenseStore() {
     debtById,
     shiftMonth,
     togglePaid,
+    toggleCardMonthPaid,
     addDebt,
     removeDebt,
     resetAll,

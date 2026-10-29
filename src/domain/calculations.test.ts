@@ -3,6 +3,7 @@ import {
   computeGlobalSummary,
   computeMonthSummary,
   debtProgress,
+  groupMonthInvoicesByCard,
   groupPendencias,
 } from './calculations'
 import { createDebtWithInstallments } from './installments'
@@ -107,5 +108,39 @@ describe('debtProgress', () => {
     })
     const progress = debtProgress(installments, debts[0]!)
     expect(progress).toEqual({ paidCount: 2, total: 6, fraction: 2 / 6 })
+  })
+})
+
+describe('groupMonthInvoicesByCard', () => {
+  it('soma dívidas distintas no mesmo cartão em uma linha', () => {
+    const a = createDebtWithInstallments(
+      {
+        name: 'Notebook',
+        card: 'Cartão Nubank',
+        totalCents: 600_000,
+        installmentCount: 6,
+        firstDueMonth: '2026-10',
+      },
+      1,
+    )
+    const b = createDebtWithInstallments(
+      {
+        name: 'Fone',
+        card: 'Cartão Nubank',
+        totalCents: 300_000,
+        installmentCount: 3,
+        firstDueMonth: '2026-10',
+      },
+      2,
+    )
+    const month = [...a.installments, ...b.installments].filter(
+      (p) => p.dueMonth === '2026-10',
+    )
+    const grouped = groupMonthInvoicesByCard(month, [a.debt, b.debt])
+    expect(grouped).toHaveLength(1)
+    expect(grouped[0]?.card).toBe('Cartão Nubank')
+    expect(grouped[0]?.amountCents).toBe(200_000)
+    expect(grouped[0]?.count).toBe(2)
+    expect(grouped[0]?.paid).toBe(false)
   })
 })

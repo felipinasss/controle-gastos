@@ -37,6 +37,15 @@ export class DexieExpenseRepository implements ExpenseRepository {
     await db.installments.update(installmentId, { paid })
   }
 
+  async setInstallmentsPaid(installmentIds: string[], paid: boolean): Promise<void> {
+    if (installmentIds.length === 0) return
+    await db.transaction('rw', db.installments, async () => {
+      await Promise.all(
+        installmentIds.map((id) => db.installments.update(id, { paid })),
+      )
+    })
+  }
+
   async toggleInstallmentPaid(installmentId: string): Promise<Installment | undefined> {
     return db.transaction('rw', db.installments, async () => {
       const current = await db.installments.get(installmentId)

@@ -116,3 +116,50 @@ export function debtProgress(
     fraction: total ? paidCount / total : 0,
   }
 }
+
+export interface CardMonthInvoice {
+  card: string
+  amountCents: number
+  installmentIds: string[]
+  count: number
+  /** true só se todas as parcelas do cartão no mês estiverem pagas */
+  paid: boolean
+}
+
+/** Agrupa faturas do mês por cartão, somando valores de dívidas distintas */
+export function groupMonthInvoicesByCard(
+  monthInstallments: Installment[],
+  debts: Debt[],
+): CardMonthInvoice[] {
+  const debtById = new Map(debts.map((d) => [d.id, d]))
+  const groups = new Map<
+    string,
+    { amountCents: number; installmentIds: string[]; count: number; unpaid: number }
+  >()
+
+  for (const p of monthInstallments) {
+    const debt = debtById.get(p.debtId)
+    const card = debt?.card || 'Sem cartão'
+    const current = groups.get(card) ?? {
+      amountCents: 0,
+      installmentIds: [],
+      count: 0,
+      unpaid: 0,
+    }
+    current.amountCents += p.amountCents
+    current.installmentIds.push(p.id)
+    current.count += 1
+    if (!p.paid) current.unpaid += 1
+    groups.set(card, current)
+  }
+
+  return [...groups.entries()]
+    .map(([card, g]) => ({
+      card,
+      amountCents: g.amountCents,
+      installmentIds: g.installmentIds,
+      count: g.count,
+      paid: g.unpaid === 0,
+    }))
+    .sort((a, b) => Number(a.paid) - Number(b.paid) || a.card.localeCompare(b.card, 'pt-BR'))
+}
