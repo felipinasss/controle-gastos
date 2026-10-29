@@ -10,9 +10,14 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <div className="av" aria-hidden>
-          R
-        </div>
+        <img
+          className="av"
+          src="/icons/icon-192.png"
+          alt=""
+          width={40}
+          height={40}
+          decoding="async"
+        />
         <h1>
           Meus <b>gastos</b>
         </h1>

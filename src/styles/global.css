@@ -42,11 +42,10 @@ header {
   min-width: var(--touch-min);
   min-height: var(--touch-min);
   border-radius: 50%;
-  background: var(--gd);
-  color: var(--g);
-  display: grid;
-  place-items: center;
-  font-weight: 700;
+  background: #000;
+  object-fit: cover;
+  display: block;
+  flex: none;
 }
 
 h1 {
