@@ -1,5 +1,9 @@
-import { createDebtWithInstallments } from '../../domain/installments'
-import type { CreateDebtInput, Debt, Installment } from '../../domain/models'
+import {
+  createDebtWithInstallments,
+  missingSubscriptionInstallments,
+} from '../../domain/installments'
+import { normalizeDebt } from '../../domain/models'
+import type { CreateDebtInput, Debt, Installment, YearMonth } from '../../domain/models'
 import type { ExpenseRepository } from '../repository'
 import { db } from './db'
 
@@ -8,7 +12,8 @@ let readyLock: Promise<void> | null = null
 
 export class DexieExpenseRepository implements ExpenseRepository {
   async listDebts(): Promise<Debt[]> {
-    return db.debts.toArray()
+    const rows = await db.debts.toArray()
+    return rows.map(normalizeDebt)
   }
 
   async listInstallments(): Promise<Installment[]> {
@@ -17,11 +22,14 @@ export class DexieExpenseRepository implements ExpenseRepository {
 
   async createDebt(
     input: CreateDebtInput,
+    throughMonth?: YearMonth,
   ): Promise<{ debt: Debt; installments: Installment[] }> {
-    const created = createDebtWithInstallments(input)
+    const created = createDebtWithInstallments(input, undefined, throughMonth)
     await db.transaction('rw', db.debts, db.installments, async () => {
       await db.debts.add(created.debt)
-      await db.installments.bulkAdd(created.installments)
+      if (created.installments.length) {
+        await db.installments.bulkAdd(created.installments)
+      }
     })
     return created
   }
@@ -68,7 +76,7 @@ export class DexieExpenseRepository implements ExpenseRepository {
     await db.transaction('rw', db.debts, db.installments, db.meta, async () => {
       await db.debts.clear()
       await db.installments.clear()
-      if (debts.length) await db.debts.bulkPut(debts)
+      if (debts.length) await db.debts.bulkPut(debts.map(normalizeDebt))
       if (installments.length) await db.installments.bulkPut(installments)
     })
   }
@@ -76,12 +84,24 @@ export class DexieExpenseRepository implements ExpenseRepository {
   /** Abre o banco local — instalação nova começa sem dívidas */
   async ensureSeeded(): Promise<void> {
     if (!readyLock) {
-      readyLock = db.open().then(() => undefined).catch((err) => {
-        readyLock = null
-        throw err
-      })
+      readyLock = db
+        .open()
+        .then(() => undefined)
+        .catch((err) => {
+          readyLock = null
+          throw err
+        })
     }
     return readyLock
+  }
+
+  async ensureSubscriptionMonths(throughMonth: YearMonth): Promise<number> {
+    const debts = await this.listDebts()
+    const existing = await this.listInstallments()
+    const missing = missingSubscriptionInstallments(debts, existing, throughMonth)
+    if (missing.length === 0) return 0
+    await db.installments.bulkPut(missing)
+    return missing.length
   }
 }
 

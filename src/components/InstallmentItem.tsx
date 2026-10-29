@@ -1,5 +1,5 @@
 import { formatBRL } from '../domain/money'
-import type { Debt, Installment } from '../domain/models'
+import { isSubscription, type Debt, type Installment } from '../domain/models'
 
 interface InstallmentItemProps {
   installment: Installment
@@ -11,15 +11,18 @@ interface InstallmentItemProps {
 export function InstallmentItem({ installment, debt, onToggle }: InstallmentItemProps) {
   const debtName = debt?.name ?? '?'
   const card = debt?.card ?? 'Sem cartão'
+  const subscription = debt ? isSubscription(debt) : false
   const total = debt?.installmentCount ?? 0
+
+  const detail = subscription
+    ? `${card} · mensal`
+    : `${card} · parcela ${installment.number}/${total}`
 
   return (
     <div className={`item${installment.paid ? ' paid' : ''}`}>
       <div className="t">
         <b>{debtName}</b>
-        <small>
-          {card} · parcela {installment.number}/{total}
-        </small>
+        <small>{detail}</small>
       </div>
       <div className="v">{formatBRL(installment.amountCents)}</div>
       <button

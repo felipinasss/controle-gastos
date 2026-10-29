@@ -1,6 +1,6 @@
 import { debtProgress } from '../domain/calculations'
 import { formatBRL } from '../domain/money'
-import type { Debt, Installment } from '../domain/models'
+import { isSubscription, type Debt, type Installment } from '../domain/models'
 
 interface DebtListProps {
   debts: Debt[]
@@ -16,25 +16,42 @@ export function DebtList({ debts, installments, onDelete }: DebtListProps) {
   return (
     <>
       {debts.map((debt) => {
+        const subscription = isSubscription(debt)
         const progress = debtProgress(installments, debt)
         return (
           <div className="item" key={debt.id}>
             <div className="t">
               <b>{debt.name}</b>
               <small>
-                {debt.card} · {formatBRL(debt.totalCents)} · {progress.paidCount}/
-                {debt.installmentCount} pagas
+                {subscription ? (
+                  <>
+                    {debt.card} · {formatBRL(debt.totalCents)}/mês · assinatura
+                    {progress.total > 0
+                      ? ` · ${progress.paidCount}/${progress.total} geradas pagas`
+                      : null}
+                  </>
+                ) : (
+                  <>
+                    {debt.card} · {formatBRL(debt.totalCents)} · {progress.paidCount}/
+                    {debt.installmentCount} pagas
+                  </>
+                )}
               </small>
-              <div className="bar" style={{ marginTop: 8 }} aria-hidden>
-                <i style={{ width: `${progress.fraction * 100}%` }} />
-              </div>
+              {!subscription ? (
+                <div className="bar" style={{ marginTop: 8 }} aria-hidden>
+                  <i style={{ width: `${progress.fraction * 100}%` }} />
+                </div>
+              ) : null}
             </div>
             <button
               type="button"
               className="del"
-              aria-label="Excluir dívida"
+              aria-label={subscription ? 'Excluir assinatura' : 'Excluir dívida'}
               onClick={async () => {
-                if (!confirm('Excluir esta dívida e suas parcelas?')) return
+                const msg = subscription
+                  ? 'Excluir esta assinatura e suas cobranças mensais?'
+                  : 'Excluir esta dívida e suas parcelas?'
+                if (!confirm(msg)) return
                 await onDelete(debt.id)
               }}
             >

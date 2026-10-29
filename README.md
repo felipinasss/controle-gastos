@@ -52,6 +52,7 @@ A UI fala só com `ExpenseRepository`. A implementação atual é Dexie; no futu
 
 - Valores **sempre em centavos** (inteiros). Resumos **nunca** são armazenados — sempre calculados a partir das parcelas.
 - Ao criar uma dívida (descrição, cartão, valor total, nº de parcelas, primeiro vencimento), as parcelas são geradas automaticamente. A **última parcela absorve o resto** da divisão.
+- **Pendência mensal (assinatura):** valor mensal recorrente (ex.: academia). Gera cobrança a cada mês a partir do início até você excluir; meses futuros são criados ao navegar no calendário.
 - **Total a pagar** = soma das parcelas não pagas.
 - **Total do mês** = soma das parcelas com vencimento naquele mês.
 - **A pagar no mês** = parcelas não pagas daquele mês.

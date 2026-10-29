@@ -1,4 +1,4 @@
-import type { CreateDebtInput, Debt, Installment } from '../domain/models'
+import type { CreateDebtInput, Debt, Installment, YearMonth } from '../domain/models'
 
 /**
  * Interface de armazenamento — permite trocar Dexie por Supabase
@@ -7,7 +7,10 @@ import type { CreateDebtInput, Debt, Installment } from '../domain/models'
 export interface ExpenseRepository {
   listDebts(): Promise<Debt[]>
   listInstallments(): Promise<Installment[]>
-  createDebt(input: CreateDebtInput): Promise<{ debt: Debt; installments: Installment[] }>
+  createDebt(
+    input: CreateDebtInput,
+    throughMonth?: YearMonth,
+  ): Promise<{ debt: Debt; installments: Installment[] }>
   deleteDebt(debtId: number): Promise<void>
   setInstallmentPaid(installmentId: string, paid: boolean): Promise<void>
   setInstallmentsPaid(installmentIds: string[], paid: boolean): Promise<void>
@@ -15,4 +18,6 @@ export interface ExpenseRepository {
   clearAll(): Promise<void>
   replaceAll(debts: Debt[], installments: Installment[]): Promise<void>
   ensureSeeded(): Promise<void>
+  /** Garante cobranças de assinatura até o mês (navegação / abertura) */
+  ensureSubscriptionMonths(throughMonth: YearMonth): Promise<number>
 }

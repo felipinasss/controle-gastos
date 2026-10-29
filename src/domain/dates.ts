@@ -48,4 +48,16 @@ export function formatMonthShort(yearMonth: YearMonth): string {
   return `${short}/${y.slice(2)}`
 }
 
+/** Diferença em meses entre dois YYYY-MM (pode ser negativa) */
+export function monthsBetween(from: YearMonth, to: YearMonth): number {
+  const [y1, m1] = from.split('-').map(Number) as [number, number]
+  const [y2, m2] = to.split('-').map(Number) as [number, number]
+  return (y2 - y1) * 12 + (m2 - m1)
+}
+
+/** Retorna o maior YYYY-MM */
+export function maxYearMonth(a: YearMonth, b: YearMonth): YearMonth {
+  return a >= b ? a : b
+}
+
 export { MONTH_NAMES }

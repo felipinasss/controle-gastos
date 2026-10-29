@@ -15,6 +15,7 @@ export function buildDemoData(now: Date = new Date()): {
       totalCents: 600_000,
       installmentCount: 6,
       firstDueMonth: current,
+      kind: 'installment',
     },
     1,
   )
@@ -25,6 +26,7 @@ export function buildDemoData(now: Date = new Date()): {
       totalCents: 240_000,
       installmentCount: 4,
       firstDueMonth: addMonths(current, -1),
+      kind: 'installment',
     },
     2,
   )

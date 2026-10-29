@@ -102,14 +102,15 @@ export function groupPendencias(
     .sort((a, b) => b.amountCents - a.amountCents)
 }
 
-/** Progresso de pagamento de uma dívida (parcelas pagas / total) */
+/** Progresso de pagamento de uma dívida (parcelas pagas / total gerado ou planejado) */
 export function debtProgress(
   installments: Installment[],
   debt: Debt,
 ): { paidCount: number; total: number; fraction: number } {
   const ofDebt = installments.filter((p) => p.debtId === debt.id)
   const paidCount = ofDebt.filter((p) => p.paid).length
-  const total = debt.installmentCount
+  const total =
+    debt.kind === 'subscription' ? ofDebt.length : debt.installmentCount
   return {
     paidCount,
     total,

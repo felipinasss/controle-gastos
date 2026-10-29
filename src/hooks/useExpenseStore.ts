@@ -4,7 +4,7 @@ import {
   computeMonthSummary,
   groupPendencias,
 } from '../domain/calculations'
-import { currentYearMonth } from '../domain/dates'
+import { currentYearMonth, maxYearMonth } from '../domain/dates'
 import type {
   AppTab,
   CreateDebtInput,
@@ -35,17 +35,26 @@ export function useExpenseStore() {
     setInstallments(nextInstallments)
   }, [])
 
+  const syncSubscriptions = useCallback(
+    async (throughMonth: YearMonth) => {
+      await expenseRepository.ensureSubscriptionMonths(
+        maxYearMonth(throughMonth, currentYearMonth()),
+      )
+      await refresh()
+    },
+    [refresh],
+  )
+
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       try {
         await expenseRepository.ensureSeeded()
         if (cancelled) return
-        await refresh()
+        await syncSubscriptions(month)
         if (!cancelled) setError(null)
       } catch (err) {
         console.error(err)
-        // Se o seed falhou por corrida mas os dados já existem, segue normal
         try {
           await refresh()
           if (!cancelled) setError(null)
@@ -60,7 +69,14 @@ export function useExpenseStore() {
     return () => {
       cancelled = true
     }
-  }, [refresh])
+    // só na montagem; meses seguintes usam shiftMonth
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (!ready) return
+    void syncSubscriptions(month)
+  }, [month, ready, syncSubscriptions])
 
   const monthSummary = useMemo(
     () => computeMonthSummary(installments, month),
@@ -110,7 +126,6 @@ export function useExpenseStore() {
     [refresh],
   )
 
-  /** Marca/desmarca todas as parcelas de um cartão no mês (visão agregada) */
   const toggleCardMonthPaid = useCallback(
     async (installmentIds: string[], currentlyAllPaid: boolean) => {
       await expenseRepository.setInstallmentsPaid(installmentIds, !currentlyAllPaid)
@@ -121,10 +136,14 @@ export function useExpenseStore() {
 
   const addDebt = useCallback(
     async (input: CreateDebtInput) => {
-      await expenseRepository.createDebt(input)
+      const now = currentYearMonth()
+      const through =
+        input.kind === 'subscription'
+          ? maxYearMonth(input.firstDueMonth, now)
+          : undefined
+      await expenseRepository.createDebt(input, through)
       await refresh()
       setTab('overview')
-      const now = currentYearMonth()
       setMonth(input.firstDueMonth > now ? input.firstDueMonth : now)
     },
     [refresh],

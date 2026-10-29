@@ -351,6 +351,38 @@ label {
   margin: 10px 0 4px;
 }
 
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0 4px;
+  color: var(--tx);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.check-row input {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  margin-top: 2px;
+  accent-color: var(--g);
+  flex: none;
+}
+
+.check-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 600;
+}
+
+.check-row small {
+  color: var(--mut);
+  font-weight: 400;
+  font-size: 12px;
+}
+
 input {
   width: 100%;
   background: var(--bg);

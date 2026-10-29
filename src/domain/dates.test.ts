@@ -4,6 +4,7 @@ import {
   currentYearMonth,
   formatMonthLabel,
   formatMonthShort,
+  monthsBetween,
   toYearMonth,
 } from './dates'
 
@@ -22,5 +23,10 @@ describe('dates', () => {
 
   it('currentYearMonth usa a data fornecida', () => {
     expect(currentYearMonth(new Date(2026, 0, 1))).toBe('2026-01')
+  })
+
+  it('monthsBetween calcula o deslocamento', () => {
+    expect(monthsBetween('2026-09', '2026-11')).toBe(2)
+    expect(monthsBetween('2026-11', '2026-09')).toBe(-2)
   })
 })
